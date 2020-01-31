@@ -1,0 +1,52 @@
+<launch>
+    <arg name="BAG_DIR" value="/home/ubuntu/black_box/bags/"/>
+    <arg name="ARCHIVE_DIR" value="/home/ubuntu/black_box/archive/"/>
+    <arg name="MAX_VOLTAGE" value="15"/>
+    <arg name="FTP_HOST" value="192.168.212.153"/>
+    <arg name="ROBOT_HOST" value="192.168.212.153"/>
+
+    <!-- START BLACKBOX CONTROL -->
+    <node name="control" pkg="blackbox_control" type="blackbox_control"/>
+
+    <!-- Create the directories -->
+    <node name="create_dir" pkg="blackbox_main" type="create_dir.sh"/>
+
+    <!-- Start ROSBAG and record all of the topics -->
+    <node name="blackbox_rosbag_record" pkg="rosbag" type="record" args="-a --split --duration=1 -o $(arg BAG_DIR)bb" />
+
+    <!-- Keep the directory cleen and drop the last files above 500  -->
+    <node name="dir_cleaner" pkg="blackbox_main" type="dir_cleaner.py" args="--path=$(arg BAG_DIR) --keep_max=500" respawn="true"/>
+
+    <!-- Start the trigger monitor -->
+    <node name="trigger_monitor" pkg="blackbox_main" type="trigger_monitor.py" output="screen">
+        <param name="bag_path" value="$(arg BAG_DIR)"/>
+        <!-- Arc failure, EStop and Voltage is higher than 15  -->
+        <param name="conditions" value='{"/FlexGui/Variables/Output34":"data.value == \"true\"","/FlexGui/Variables/EStop":"data.value == \"false\"", "/welding_driver/current_params":"data.voltage > $(arg MAX_VOLTAGE)"}'/>
+        <!-- Go back 30s in the past and continue for 15s into the future -->
+        <param name="bag_from" value="30"/>
+        <param name="bag_to" value="15"/>
+    </node>
+
+    <!-- Record the NACHI teachpendants view -->
+    <node name="nachi_tp_view" pkg="blackbox_main" type="nachi_tp_view.sh" output="screen">
+        <param name="fps" value="1"/>
+        <param name="roboturl" value="$(arg ROBOT_HOST)"/>
+    </node>
+
+    <!-- Start the cloud uploader-->
+    <node name="cloud_uploader" pkg="blackbox_main" type="cloud_uploader.py" output="screen">
+        <param name="ftp_host" value="$(arg FTP_HOST)"/>
+        <param name="ftp_username" value="LAPTOP-7P212I8F\ftp"/>
+        <param name="ftp_password" value="12345678"/>
+        <param name="smtp_host" value="smtp.gmail.com"/>
+        <param name="smtp_username" value="rosin.blackbox"/>
+        <param name="smtp_password" value="2006ppmas"/>
+        <param name="email_toaddress" value="balint.tahi@hotmail.com"/>
+        <param name="archive_path" value="$(arg ARCHIVE_DIR)"/>
+    </node>
+
+    <!-- Start rosbridge and mjpeg server -->
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+    <node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" output="screen" respawn="true"/>
+
+</launch>

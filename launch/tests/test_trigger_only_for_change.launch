@@ -1,0 +1,17 @@
+<launch>
+    <arg name="BAG_DIR" value="/home/user/black_box/bags/"/>
+    <arg name="ARCHIVE_DIR" value="/home/user/black_box/archive/"/>
+    <node name="control" pkg="blackbox_control" type="blackbox_control"/>
+    <node name="create_dir" pkg="blackbox_main" type="create_dir.sh"/>
+    <node name="blackbox_rosbag_record" pkg="rosbag" type="record" args="-a --split --duration=1 -o $(arg BAG_DIR)bb" />
+    <node name="dir_cleaner" pkg="blackbox_main" type="dir_cleaner.py" args="--path=$(arg BAG_DIR) --keep_max=500" />
+    <node name="trigger_monitor" pkg="blackbox_main" type="trigger_monitor.py">
+        <param name="bag_path" value="$(arg BAG_DIR)"/>
+        <param name="conditions" value='{"/test":"data.data != 0"}'/>
+        <param name="bag_from" value="10"/>
+        <param name="bag_to" value="10"/>
+        <param name="on_change_only" value="True"/>
+        <param name="trigger_delay" value="1000"/>
+    </node>
+    
+</launch>

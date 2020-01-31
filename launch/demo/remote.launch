@@ -1,0 +1,29 @@
+<launch>
+
+    <arg name="FTP_HOST" value="192.168.1.192"/>
+    <arg name="BAG_DIR" value="/home/ubuntu/black_box/bags/"/>
+    <arg name="ARCHIVE_DIR" value="/home/ubuntu/black_box/archive/"/>
+
+    <!-- START BLACKBOX CONTROL -->
+    <node name="control" pkg="blackbox_control" type="blackbox_control" output="screen"/>
+
+    <!-- Create the directories -->
+    <node name="create_dir" pkg="blackbox_main" type="create_dir.sh"/>
+
+    <!-- Start rosbridge and mjpeg server -->
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+    <node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" output="screen" respawn="true"/>
+
+    <!-- Start the cloud uploader-->
+    <node name="cloud_uploader" pkg="blackbox_main" type="cloud_uploader.py" output="screen">
+        <param name="ftp_host" value="$(arg FTP_HOST)"/>
+        <param name="ftp_username" value="LAPTOP-7P212I8F\ftp"/>
+        <param name="ftp_password" value="12345678"/>
+        <param name="smtp_host" value="smtp.gmail.com"/>
+        <param name="smtp_username" value="rosin.blackbox"/>
+        <param name="smtp_password" value="2006ppmas"/>
+        <param name="email_toaddress" value="balint.tahi@hotmail.com"/>
+        <param name="archive_path" value="$(arg ARCHIVE_DIR)"/>
+    </node>
+
+</launch>

@@ -1,0 +1,13 @@
+<launch>
+    <arg name="BAG_DIR" value="/home/user/black_box/bags/"/>
+    <node name="cloud_uploader" pkg="blackbox_main" type="cloud_uploader.py">
+        <param name="ftp_host" value="None"/>
+        <param name="ftp_username" value="None"/>
+        <param name="ftp_password" value="None"/>
+        <param name="smtp_host" value="None"/>
+        <param name="smtp_username" value="None"/>
+        <param name="smtp_password" value="None"/>
+        <param name="email_toaddress" value="None"/>
+        <param name="bag_path" value=""/>
+    </node>
+</launch>

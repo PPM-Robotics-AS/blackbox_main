@@ -1,0 +1,24 @@
+<launch>
+    <arg name="BAG_DIR" value="/home/user/black_box/bags/"/>
+    <arg name="ARCHIVE_DIR" value="/home/user/black_box/archive/"/>
+    <node name="control" pkg="blackbox_control" type="blackbox_control"/>
+    <node name="create_dir" pkg="blackbox_main" type="create_dir.sh"/>
+    <node name="blackbox_rosbag_record" pkg="rosbag" type="record" args="-a --split --duration=10 -o $(arg BAG_DIR)bb" />
+    <node name="dir_cleaner" pkg="blackbox_main" type="dir_cleaner.py" args="--path=$(arg BAG_DIR) --keep_max=500" />
+    <node name="trigger_monitor" pkg="blackbox_main" type="trigger_monitor.py">
+        <param name="bag_path" value="$(arg BAG_DIR)"/>
+        <param name="conditions" value='{"/test":"data.data > 10"}'/>
+        <param name="bag_from" value="2"/>
+        <param name="bag_to" value="2"/>
+    </node>
+    <node name="cloud_uploader" pkg="blackbox_main" type="cloud_uploader.py">
+        <param name="ftp_host" value="192.168.56.1"/>
+        <param name="ftp_username" value=""/>
+        <param name="ftp_password" value=""/>
+        <param name="smtp_host" value="smtp.gmail.com"/>
+        <param name="smtp_username" value=""/>
+        <param name="smtp_password" value=""/>
+        <param name="email_toaddress" value=""/>
+        <param name="archive_path" value="$(arg ARCHIVE_DIR)"/>
+    </node>
+</launch>
